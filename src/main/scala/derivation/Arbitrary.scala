@@ -18,6 +18,7 @@ object Arbitrary {
    implicit h: Arbitrary[H], t: Arbitrary[T]): Arbitrary[H :: T] = new Arbitrary[H :: T] {
     def value = h.value :: t.value
   }
+
   implicit val arbitraryCNil: Arbitrary[CNil] = new Arbitrary[CNil] {
     def value = ???
   }
@@ -25,6 +26,11 @@ object Arbitrary {
    implicit h: Arbitrary[H], t: Arbitrary[T]): Arbitrary[H :+: T] = new Arbitrary[H :+: T] {
     def value = if (Random.nextBoolean) Inl(h.value) else Inr(t.value)
   }
+  implicit def arbitraryCLast[H](
+   implicit h: Arbitrary[H]): Arbitrary[H :+: CNil] = new Arbitrary[H :+: CNil] {
+    def value = Inl(h.value)
+  }
+
   implicit val arbitraryInt: Arbitrary[Int] = new Arbitrary[Int] {
     def value = 1
   }
