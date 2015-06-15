@@ -1,8 +1,10 @@
 package derivation
 
 import shapeless._
+import shapeless.ops.coproduct._
+import shapeless.ops.nat._
 
-import scala.util.Random
+import scala.util._
 
 sealed trait Animal
 case class Cat(name: String, fish: Int) extends Animal
@@ -11,6 +13,7 @@ case class Dog(name: String, bones: Int) extends Animal
 object Arbitrary {
   def apply[T](implicit a: Arbitrary[T]) = a
 
+
   implicit val arbitraryHNil: Arbitrary[HNil] = new Arbitrary[HNil] {
     def value = HNil
   }
@@ -18,18 +21,26 @@ object Arbitrary {
    implicit h: Arbitrary[H], t: Arbitrary[T]): Arbitrary[H :: T] = new Arbitrary[H :: T] {
     def value = h.value :: t.value
   }
+
   implicit val arbitraryCNil: Arbitrary[CNil] = new Arbitrary[CNil] {
     def value = ???
   }
-  implicit def arbitraryCCon[H, T <: Coproduct](
-   implicit h: Arbitrary[H], t: Arbitrary[T]): Arbitrary[H :+: T] = new Arbitrary[H :+: T] {
-    def value = if (Random.nextBoolean) Inl(h.value) else Inr(t.value)
+  implicit def arbitraryCCon[H, T <: Coproduct, N <: Nat](
+   implicit h: Arbitrary[H],
+   t: Arbitrary[T],
+   length: Length.Aux[T, N],
+   toInt: ToInt[N]): Arbitrary[H :+: T] = new Arbitrary[H :+: T] {
+    def value = {
+      val choice = Random.nextInt(1+toInt())
+      if (choice == 0) Inl(h.value) else Inr(t.value)
+    }
   }
+
   implicit val arbitraryInt: Arbitrary[Int] = new Arbitrary[Int] {
-    def value = 1
+    def value = Random.nextInt(10)
   }
   implicit val arbitraryString: Arbitrary[String] = new Arbitrary[String] {
-    def value = "whatever"
+    def value = s"<<[${Random.nextInt(10)}]>>"
   }
 
   implicit def arbitraryGen[T, R](implicit
